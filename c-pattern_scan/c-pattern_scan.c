@@ -20,6 +20,9 @@ PATTERNFNVALUES pattern_to_byte( const char* pattern ) {
             if ( *current == '?' ) {
                 current++;
             }
+
+            returnValue.data[returnValue.size] = -1;
+            returnValue.size++;
         } else {
             returnValue.data[returnValue.size] = strtoul( current, &current, 16 );
             returnValue.size++;
@@ -28,7 +31,7 @@ PATTERNFNVALUES pattern_to_byte( const char* pattern ) {
 
     return returnValue;
 }
-void*           pattern( const char* moduleName, const char* pattern ) {
+void* pattern( const char* moduleName, const char* pattern ) {
     void* moduleBase = GetModuleHandleA( moduleName );
     if ( !moduleBase ) {
         return NULL;
@@ -45,10 +48,10 @@ void*           pattern( const char* moduleName, const char* pattern ) {
     int*   d = patternBytes.data;
 
     for ( auto i = 0ul; i < sizeOfImage - s; ++i ) {
-        int found = 0;
+        int found = 1;
         for ( auto j = 0ul; j < s; ++j ) {
-            if ( scanBytes[i + j] != d[j]) {
-                found = 1;
+            if ( scanBytes[i + j] != d[j] && d[j] != -1 ) {
+                found = 0;
                 break;
             }
         }
@@ -56,8 +59,11 @@ void*           pattern( const char* moduleName, const char* pattern ) {
             return &scanBytes[i];
         }
     }
+
+    return NULL;
 }
 
 void main() {
-    printf( "%p \n", pattern("kernel32.dll","4C 8B DC 48 83 EC 48 48 8B C2 48 F7 D8 4D 1B D2 49 83 63 ? ? 4D 23 D0 45 33 C0 4D 89 53 E8 49 89 53 E0 B2 01 49 89 4B D8  "));
+    LoadLibrary( "kernel32.dll" );
+    printf( "%p \n", pattern("kernel32.dll","4C 8B DC 48 83 EC 48 48 8B C2 48 F7 D8 4D 1B D2 49 83 63 ? ? 4D 23 D0 45 33 C0 4D 89 53 E8 49 89 53 E0 B2 01 49 89 4B D8 "));
 }
